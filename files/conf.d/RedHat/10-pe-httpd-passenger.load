@@ -1,1 +1,0 @@
-LoadModule passenger_module /opt/puppet/lib/phusion_passenger/mod_passenger.so
