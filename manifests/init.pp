@@ -3,21 +3,20 @@
 ## console/dashboard  => subscribe => auth.conf
 
 # leverage puppetlabs/apache if possible
-class pe_httpd {
+class pe_httpd (
+  $version = installed,
+) {
+  include pe_memcached
 
-  # STUB STUB STUB STUB STUB
-  # This is just here to make dependencies in other classes work. It can be
-  # ripped out and replaced - there just needs to exist a Service['pe-httpd']
-  service { 'pe-httpd':
-    ensure => running,
-    enable => true,
+  package { 'pe-httpd':
+    ensure => $version,
+    before => Service['pe-httpd'],
   }
 
-  # TODO: break out the pe-memcached stuff into its own module
-  service { 'pe-memcached':
-    ensure => running,
-    enable => true,
-    before => Service['pe-httpd'],
+  service { 'pe-httpd':
+    ensure  => running,
+    enable  => true,
+    require => Service['pe-memcached'],
   }
 
   # PATCH: manage missing shebang in init script for Debian packaging
@@ -28,6 +27,8 @@ class pe_httpd {
       provider => shell,
       command  => "f=$(echo '#!/bin/bash' | cat - ${memcached}); echo \"\$f\" > ${memcached}",
       unless   => "grep -q '#!/bin/' $memcached",
+      before   => Service['pe-httpd'],
+      require  => Package['pe-httpd'],
     }
   }
 
