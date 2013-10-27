@@ -4,12 +4,26 @@
 
 # leverage puppetlabs/apache if possible
 class pe_httpd (
-  $version = installed,
+  $httpd_version     = installed,
+  $passenger_version = installed,
+  $rack_version      = installed,
+  $confdir           = '/etc/puppetlabs/httpd',
 ) {
   include pe_memcached
+  include pe_httpd::mod::ssl
 
   package { 'pe-httpd':
-    ensure => $version,
+    ensure => $httpd_version,
+    before => Service['pe-httpd'],
+  }
+
+  package { 'pe-passenger':
+    ensure => $passenger_version,
+    before => Service['pe-httpd'],
+  }
+
+  package { 'pe-rubygem-rack':
+    ensure => $rack_version,
     before => Service['pe-httpd'],
   }
 
@@ -19,11 +33,11 @@ class pe_httpd (
     require => Service['pe-memcached'],
   }
 
-  file { '/etc/puppetlabs/httpd/conf.d':
+  file { "${confdir}/conf.d":
     ensure  => directory,
     owner   => '0',
     group   => '0',
-    mode    => '0644',
+    mode    => '0755',
     notify  => Service['pe-httpd'],
     require => Package['pe-httpd'],
   }
